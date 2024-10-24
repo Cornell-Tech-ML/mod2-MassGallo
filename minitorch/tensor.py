@@ -201,6 +201,7 @@ class Tensor:
 
     def zeros(self, shape: Optional[UserShape] = None) -> Tensor:
         """Returns a tensor of zeros with the given shape"""
+
         def zero(shape: UserShape) -> Tensor:
             return Tensor.make(
                 [0.0] * int(operators.prod(shape)), shape, backend=self.backend
@@ -263,7 +264,9 @@ class Tensor:
         assert h.ctx is not None
 
         x = h.last_fn._backward(h.ctx, d_output)
-        assert len(x) == len(h.inputs), f"Bug in function {h.last_fn}, {len(x)} != {len(h.inputs)}, {x}, {h.inputs}"
+        assert len(x) == len(
+            h.inputs
+        ), f"Bug in function {h.last_fn}, {len(x)} != {len(h.inputs)}, {x}, {h.inputs}"
         return [
             (inp, inp.expand(self._ensure_tensor(d_in)))
             for inp, d_in in zip(h.inputs, x)
@@ -316,54 +319,54 @@ class Tensor:
 
     def __neg__(self) -> Tensor:
         return Neg.apply(self)
-    
+
     def __radd__(self, b: TensorLike) -> Tensor:
         return Add.apply(self._ensure_tensor(b), self)
-    
+
     def __rmul__(self, b: TensorLike) -> Tensor:
         return Mul.apply(self._ensure_tensor(b), self)
-    
+
     def all(self, dim: Optional[TensorLike] = None) -> Tensor:
         """Returns all elements of the tensor"""
         if dim is not None:
             return All.apply(self, self._ensure_tensor(dim))
         else:
             return All.apply(self)
-    
+
     def is_close(self, b: TensorLike) -> Tensor:
         """Returns whether the tensor is close to another tensor"""
         return IsClose.apply(self, self._ensure_tensor(b))
-    
+
     def sigmoid(self) -> Tensor:
         """Returns the sigmoid of the tensor"""
         return Sigmoid.apply(self)
-    
+
     def relu(self) -> Tensor:
         """Returns the ReLU of the tensor"""
         return ReLU.apply(self)
-    
+
     def log(self) -> Tensor:
         """Returns the log of the tensor"""
         return Log.apply(self)
-    
+
     def exp(self) -> Tensor:
         """Returns the exponential of the tensor"""
         return Exp.apply(self)
-    
+
     def sum(self, dim: Optional[TensorLike] = None) -> Tensor:
         """Returns the sum of the tensor"""
         if dim is not None:
             return Sum.apply(self, self._ensure_tensor(dim))
         else:
             return Sum.apply(self)
-        
+
     def mean(self, dim: Optional[TensorLike] = None) -> Tensor:
         """Returns the mean of the tensor"""
         if dim is not None:
             return Sum.apply(self, self._ensure_tensor(dim)) / self.size
         else:
             return Sum.apply(self) / self.size
-        
+
     def permute(self, *dims: TensorLike) -> Tensor:
         """Returns the permutation of the tensor"""
         if len(dims) == 1:
@@ -372,7 +375,7 @@ class Tensor:
             return Permute.apply(self)
         else:
             return Permute.apply(self, tensor(dims))
-    
+
     def view(self, *dims: TensorLike) -> Tensor:
         """Returns the view of the tensor"""
         if len(dims) == 1:

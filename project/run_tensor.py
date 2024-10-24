@@ -42,7 +42,7 @@ class Linear(minitorch.Module):
         x = x.view(batch_size, self.in_size, 1)
         w = self.weights.value.view(1, self.in_size, self.out_size)
         b = self.bias.value.view(1, self.out_size)
-        
+
         # Compute output: (batch_size, in_size, 1) * (1, in_size, out_size) -> (batch_size, out_size)
         out = (x * w).sum(1).view(batch_size, self.out_size)
         return out + b
@@ -59,7 +59,7 @@ class TensorTrain:
     def run_many(self, X: list) -> minitorch.Tensor:
         return self.model.forward(minitorch.tensor(X))
 
-    def train(self, data, learning_rate: float, max_epochs: int = 500, 
+    def train(self, data, learning_rate: float, max_epochs: int = 500,
              log_fn = lambda epoch, loss, correct, _: print(f"Epoch {epoch}, loss {loss}, correct {correct}")):
         """Train the model using binary cross entropy loss."""
         # Initialize model and optimizer
@@ -80,7 +80,7 @@ class TensorTrain:
             loss = -(y * out.log() + (1.0 + (-y)) * (1.0 + (-out)).log())
             loss_mean = loss.sum() / data.N
 
-            
+
 
             # Backward pass
             loss_mean.backward()

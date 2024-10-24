@@ -93,7 +93,7 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
                 if not i.is_constant():
                     dfs(i)
         visited.add(node.unique_id)
-        order.insert(0,node)
+        order.insert(0, node)
 
     dfs(variable)
     return order

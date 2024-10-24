@@ -1,6 +1,5 @@
 """Disclaimer: AI Claude 3.5 Sonnet (Cursor on Mac) was used to help write comments and code for this file."""
 
-
 from __future__ import annotations
 
 import random

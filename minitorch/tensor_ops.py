@@ -1,3 +1,6 @@
+"""Disclaimer: AI Claude 3.5 Sonnet (Cursor on Mac) was used to help write comments and code for this file."""
+
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional, Type
@@ -7,16 +10,14 @@ from typing_extensions import Protocol
 
 from . import operators
 from .tensor_data import (
-    MAX_DIMS,
     broadcast_index,
     index_to_position,
     shape_broadcast,
-    to_index,
 )
 
 if TYPE_CHECKING:
     from .tensor import Tensor
-    from .tensor_data import Index, Shape, Storage, Strides
+    from .tensor_data import Shape, Storage, Strides
 
 
 class MapProto(Protocol):
@@ -41,7 +42,9 @@ class TensorOps:
     @staticmethod
     def reduce(
         fn: Callable[[float, float], float], start: float = 0.0
-    ) -> Callable[[Tensor, int], Tensor]: ...
+    ) -> Callable[[Tensor, int], Tensor]:
+        """Reduce placeholder"""
+        ...
 
     @staticmethod
     def matrix_multiply(a: Tensor, b: Tensor) -> Tensor:
@@ -195,7 +198,7 @@ class SimpleOps(TensorOps):
         Args:
             fn: function from two floats-to-float to apply
             a (:class:`TensorData`): tensor to reduce over
-            dim (int): int of dim to reduce
+            start (float): starting value for the reduction
 
         Returns:
             :class:`TensorData` : new tensor
@@ -220,8 +223,6 @@ class SimpleOps(TensorOps):
     def matrix_multiply(a: "Tensor", b: "Tensor") -> "Tensor":
         """Matrix multiplication"""
         raise NotImplementedError("Not implemented in this assignment")
-
-    is_cuda = False
 
 
 # Implementations.
@@ -261,10 +262,29 @@ def tensor_map(
         in_shape: Shape,
         in_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # Initialize index arrays for output and input tensors
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        in_index = np.zeros(len(in_shape), dtype=np.int32)
+
+        for i in range(len(out)):
+            # Handle broadcasting: map out_index to in_index
+            broadcast_index(out_index, out_shape, in_shape, in_index)
+
+            # Convert in_index to a single position in in_storage
+            in_position = index_to_position(in_index, in_strides)
+
+            # Apply the function and store the result in the output storage
+            out[i] = fn(in_storage[in_position])
+
+            # Update the out_index for the next position
+            for j in reversed(range(len(out_shape))):
+                out_index[j] += 1
+                if out_index[j] < out_shape[j]:
+                    break
+                out_index[j] = 0
 
     return _map
+
 
 
 def tensor_zip(
@@ -306,8 +326,32 @@ def tensor_zip(
         b_shape: Shape,
         b_strides: Strides,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # Initialize index arrays for output and input tensors
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        a_index = np.zeros(len(a_shape), dtype=np.int32)
+        b_index = np.zeros(len(b_shape), dtype=np.int32)
+
+        for i in range(len(out)):
+            # Calculate flat position in output storage
+            out_position = index_to_position(out_index, out_strides)
+
+            # Handle broadcasting: map out_index to a_index and b_index
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            broadcast_index(out_index, out_shape, b_shape, b_index)
+
+            # Convert a_index and b_index to flat positions in their storages
+            a_position = index_to_position(a_index, a_strides)
+            b_position = index_to_position(b_index, b_strides)
+
+            # Apply the function and store the result in the output storage
+            out[out_position] = fn(a_storage[a_position], b_storage[b_position])
+
+            # Update the out_index for the next position
+            for j in reversed(range(len(out_shape))):
+                out_index[j] += 1
+                if out_index[j] < out_shape[j]:
+                    break
+                out_index[j] = 0
 
     return _zip
 
@@ -337,8 +381,40 @@ def tensor_reduce(
         a_strides: Strides,
         reduce_dim: int,
     ) -> None:
-        # TODO: Implement for Task 2.3.
-        raise NotImplementedError("Need to implement for Task 2.3")
+        # Handle negative reduce_dim
+        if reduce_dim < 0:
+            reduce_dim += len(a_shape)
+        
+        # Initialize indices
+        out_index = np.zeros(len(out_shape), dtype=np.int32)
+        a_index = np.zeros(len(a_shape), dtype=np.int32)
+        
+        # For each output position
+        for i in range(len(out)):
+            # Map output index to input index
+            broadcast_index(out_index, out_shape, a_shape, a_index)
+            
+            # Start reduction with first element
+            a_index[reduce_dim] = 0
+            acc = a_storage[index_to_position(a_index, a_strides)]
+            
+            # Reduce along dimension
+            for r in range(1, a_shape[reduce_dim]):
+                a_index[reduce_dim] = r
+                pos = index_to_position(a_index, a_strides)
+                acc = fn(acc, a_storage[pos])
+            
+            # Store result
+            out[index_to_position(out_index, out_strides)] = acc
+            
+            # Update output index
+            for j in reversed(range(len(out_shape))):
+                out_index[j] += 1
+                if out_index[j] < out_shape[j]:
+                    break
+                out_index[j] = 0
+
+        return _reduce
 
     return _reduce
 

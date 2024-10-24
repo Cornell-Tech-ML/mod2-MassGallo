@@ -119,6 +119,59 @@ def test_shape_broadcast() -> None:
     c = minitorch.shape_broadcast((2, 5), (5,))
     assert c == (2, 5)
 
+@pytest.mark.task2_2
+def test_broadcast_index() -> None:
+    # Test Case 1: tensor1 (3,1) -> (3,2)
+    # When broadcasting (3,1) to (3,2), the second dimension is replicated
+    big_shape = (3, 2)  # broadcasted shape
+    shape = (3, 1)      # original shape
+    
+    # Testing various indices
+    out_index = [0, 0]
+    minitorch.broadcast_index([0, 1], big_shape, shape, out_index)
+    assert out_index == [0, 0], f"Expected [0, 0], got {out_index}"
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([1, 0], big_shape, shape, out_index)
+    assert out_index == [1, 0], f"Expected [1, 0], got {out_index}"
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([2, 1], big_shape, shape, out_index)
+    assert out_index == [2, 0], f"Expected [2, 0], got {out_index}"
+
+    # Test Case 2: tensor2 (1,2) -> (3,2)
+    # When broadcasting (1,2) to (3,2), the first dimension is replicated
+    big_shape = (3, 2)
+    shape = (1, 2) 
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([0, 1], big_shape, shape, out_index)
+    assert out_index == [0, 1], f"Expected [0, 1], got {out_index}"
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([1, 0], big_shape, shape, out_index)
+    assert out_index == [0, 0], f"Expected [0, 0], got {out_index}"
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([2, 1], big_shape, shape, out_index)
+    assert out_index == [0, 1], f"Expected [0, 1], got {out_index}"
+
+    # Test Case 3: Simple case (no broadcasting needed)
+    big_shape = (2, 3)
+    shape = (2, 3)
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([1, 2], big_shape, shape, out_index)
+    assert out_index == [1, 2], f"Expected [1, 2], got {out_index}"
+
+    # Test Case 4: Broadcasting with dimension size 1
+    big_shape = (2, 3)
+    shape = (2, 1)
+    
+    out_index = [0, 0]
+    minitorch.broadcast_index([1, 2], big_shape, shape, out_index)
+    assert out_index == [1, 0], f"Expected [1, 0], got {out_index}"
+
 
 @given(tensor_data())
 def test_string(tensor_data: TensorData) -> None:
